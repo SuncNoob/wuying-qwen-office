@@ -3,7 +3,7 @@
   "scenario": "coding",
   "type": "plan",
   "title": "千问办公 Agentic Coding Agent",
-  "status": "open",
+  "status": "claimed",
   "body": "用 AgentScope 重做「千问办公」最小可用产品。覆盖仓库里现有的错误实现（秘书/日程/待办助手）。\n\n产品定位：千问办公是类似 Qoder、Claude Code、OpenAI Codex 的 AI 编程产品（Agentic Coding Agent / Autonomous coding desktop），不是办公秘书、不是日历、不是待办清单。用户用自然语言描述开发任务，Agent 在本地 workspace 里读代码、改代码、跑命令、交付可审查的结果。\n\n必须具备：\n1. CLI：`python app.py` / `python app.py --help`。可指定 --workspace 目录，接收一条用户任务（参数或 REPL）。\n2. AgentScope Toolkit 工具至少：read_file、write_file、edit_file、list_dir 或 glob、grep、run_shell。Agent 用这些工具完成编码，而不是只聊天。\n3. 模型：通义千问 / DashScopeChatModel。DASHSCOPE_API_KEY 只从环境变量读取，禁止写进源码。\n4. `--demo`：不调用 DashScope。必须模拟一次完整编码闭环（例如读 workspace 里的文件 → 写出/修改一段代码 → 跑一条检查命令），并打印工具调用轨迹，便于无 Key 验收。\n5. 可选轻量本地 Web（可用 --web，端口可配）：Quest 式任务窗口（对话、工具步骤、文件变更），不要做成日程/待办 UI。\n6. README 必须写明：这是 AI 编程 Agent，对标 Qoder / Claude Code / Codex；以及安装、CLI、--demo 用法。\n\n技术：优先 AgentScope 2.x（from agentscope.agent import Agent，Toolkit，DashScopeChatModel）。若 python3 < 3.11，用 AgentScope 1.x ReActAgent。必须 `import agentscope`。\n\n交付（均相对仓库根，覆盖旧文件）：\n- README.md\n- requirements.txt（含 agentscope）\n- app.py（可运行入口；无 Key 时 --help / import / --demo 不崩溃）\n- .env.example（DASHSCOPE_API_KEY=）\n- 如需拆模块可增加包目录，但入口必须是 app.py\n\n不要改 .cowork/ 协议文件。不要提交真实密钥。不要再实现秘书/日程/待办。\n",
   "need": [
     "README.md",
@@ -11,7 +11,7 @@
     "app.py",
     ".env.example"
   ],
-  "owner": "",
+  "owner": "ac1",
   "seed_urls": [],
   "allow_hosts": [],
   "path": "app.py",
@@ -21,5 +21,5 @@
   "brand": "",
   "max_images": 0,
   "created_at": 1789728283,
-  "updated_at": 1789728283
+  "updated_at": 1789728377
 }
