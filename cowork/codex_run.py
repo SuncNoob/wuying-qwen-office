@@ -90,11 +90,12 @@ Primary path (must exist when you finish): {path}
 Also create these files: {files}
 
 Hard rules:
-1. Use the AgentScope Python framework (https://github.com/agentscope-ai/agentscope). Prefer AgentScope 2.x (`from agentscope.agent import Agent`, DashScopeChatModel, Toolkit). If python3 is older than 3.11, use AgentScope 1.x (`ReActAgent`, `DashScopeChatModel`) instead — still import agentscope.
-2. This is a 千问办公 app: office assistant agents (秘书 / 日程 / 待办 at minimum) talking to Qwen via DashScope. Read DASHSCOPE_API_KEY from the environment. Do not hardcode secrets.
-3. Include README.md (how to run), requirements.txt, .env.example with DASHSCOPE_API_KEY=, and a single entrypoint (app.py or equivalent).
-4. No network calls required at import time. `python3 -c "import app"` or the documented CLI `--help` should work without a real API key.
-5. Do not commit .env. Overwrite files if they already exist. Keep the .cowork/ protocol tree intact.
+1. Follow the Brief. Do not invent a different product. 千问办公 is an AI coding agent (like Qoder / Claude Code / Codex), not a calendar or todo secretary.
+2. Use the AgentScope Python framework (https://github.com/agentscope-ai/agentscope). Prefer AgentScope 2.x (`from agentscope.agent import Agent`, DashScopeChatModel, Toolkit with file/shell tools such as Bash, Grep, Glob, Read, Write, Edit). If python3 is older than 3.11, use AgentScope 1.x (`ReActAgent`) instead — still import agentscope.
+3. Model is Qwen via DashScope. Read DASHSCOPE_API_KEY from the environment. Do not hardcode secrets.
+4. Include README.md (product + how to run), requirements.txt, .env.example with DASHSCOPE_API_KEY=, and a single entrypoint (app.py or equivalent).
+5. No network calls required at import time. `python3 -c "import app"` or the documented CLI `--help` should work without a real API key. Provide `--demo` that shows an agent coding loop without calling DashScope.
+6. Do not commit .env. Overwrite files if they already exist. Keep the .cowork/ protocol tree intact.
 
 When finished, print DONE and the file list. If you cannot build it, print FAIL and why.
 """
