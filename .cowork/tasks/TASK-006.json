@@ -3,7 +3,7 @@
   "scenario": "coding",
   "type": "review",
   "title": "Review: 千问办公 Agentic Coding Agent",
-  "status": "in_progress",
+  "status": "done",
   "body": "",
   "need": [],
   "owner": "ac3",
@@ -18,5 +18,5 @@
   "brand": "",
   "max_images": 0,
   "created_at": 1789728390,
-  "updated_at": 1789728916
+  "updated_at": 1789728920
 }
