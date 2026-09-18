@@ -1,0 +1,12 @@
+{
+  "protocol": "1.0",
+  "name": "qwen-office",
+  "scenario": "coding",
+  "remote": "git@github-office:SuncNoob/wuying-qwen-office.git",
+  "roles": {
+    "planner": "ac1",
+    "builder": "ac2",
+    "reviewer": "ac3"
+  },
+  "created_at": 1789725436
+}

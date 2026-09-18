@@ -1,0 +1,6 @@
+.venv/
+__pycache__/
+*.pyc
+.env
+cowork.local.json
+.pytest_cache/

@@ -1,0 +1,11 @@
+{
+  "id": "ac3",
+  "role": "reviewer",
+  "capabilities": [
+    "review"
+  ],
+  "model": "Auto",
+  "host": "53779",
+  "heartbeat_at": 0,
+  "protocol": "1.0"
+}

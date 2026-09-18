@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>无影 Agentic Computer 监控</title>
+  <style>
+    :root {
+      --bg: #0b0c0f;
+      --panel: #14161b;
+      --panel-2: #1a1d24;
+      --line: #2a2e36;
+      --text: #eceff3;
+      --muted: #8b929e;
+      --idle: #8b929e;
+      --run: #3dd68c;
+      --wait: #e6b84d;
+      --fail: #f07178;
+      --off: #6b7078;
+      --ready: #6cb6ff;
+      --accent: #3d8bfd;
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font: 13px/1.5 "SF Pro Text", "PingFang SC", ui-sans-serif, system-ui, sans-serif;
+    }
+    header {
+      display: flex; align-items: center; justify-content: space-between; gap: 20px;
+      padding: 16px 28px; border-bottom: 1px solid var(--line);
+      background: linear-gradient(180deg, #12141a, #0b0c0f);
+    }
+    .brand { display: flex; align-items: center; gap: 12px; min-width: 0; }
+    .mark {
+      width: 28px; height: 28px; border-radius: 8px; flex: none;
+      background: linear-gradient(135deg, #3d8bfd, #3dd68c);
+    }
+    h1 { font-size: 15px; font-weight: 650; margin: 0; letter-spacing: .01em; }
+    .sub { color: var(--muted); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .actions { display: flex; gap: 8px; align-items: center; flex: none; }
+    button {
+      background: var(--panel-2); color: var(--text); border: 1px solid var(--line);
+      border-radius: 8px; padding: 7px 12px; cursor: pointer; font: inherit;
+    }
+    button:hover { background: #232833; }
+    button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+    button.primary:hover { background: #5ca0ff; }
+    button.ghost { color: var(--muted); }
+    button:disabled { opacity: .4; cursor: not-allowed; }
+    main { padding: 18px 28px 40px; display: grid; gap: 18px; max-width: 1400px; margin: 0 auto; }
+    .stats { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; }
+    .stat {
+      background: var(--panel); border: 1px solid var(--line); border-radius: 10px;
+      padding: 10px 12px;
+    }
+    .stat b { display: block; font-size: 20px; font-weight: 650; letter-spacing: -.02em; }
+    .stat span { color: var(--muted); font-size: 11px; }
+    .stat.ok b { color: var(--run); }
+    .stat.info b { color: var(--ready); }
+    .stat.warn b { color: var(--wait); }
+    .stat.bad b { color: var(--fail); }
+    .acs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+    @media (max-width: 980px) {
+      header { flex-wrap: wrap; padding: 14px 16px; }
+      main { padding: 14px 16px 32px; }
+      .stats { grid-template-columns: repeat(3, 1fr); }
+      .acs { grid-template-columns: 1fr; }
+    }
+    .card {
+      background: var(--panel); border: 1px solid var(--line); border-radius: 12px;
+      padding: 14px 16px; min-height: 196px; display: grid; gap: 8px;
+      border-left: 3px solid var(--line);
+    }
+    .card.run { border-left-color: var(--run); }
+    .card.wait { border-left-color: var(--wait); }
+    .card.idle { border-left-color: #3a414d; }
+    .card.off { border-left-color: var(--off); }
+    .card h2 { margin: 0; font-size: 14px; display: flex; justify-content: space-between; align-items: center; }
+    .pill {
+      font-size: 11px; font-weight: 550; padding: 2px 8px; border-radius: 999px;
+      border: 1px solid var(--line); color: var(--muted);
+    }
+    .pill.run { color: var(--run); border-color: #245c40; background: #14261c; }
+    .pill.idle { color: var(--idle); }
+    .pill.off { color: var(--off); }
+    .pill.wait { color: var(--wait); border-color: #5c4a1f; background: #261e10; }
+    .pill.ready { color: var(--ready); border-color: #2a4d73; background: #121c28; }
+    .pill.blocked { color: var(--wait); border-color: #5c4a1f; background: #261e10; }
+    .pill.in_progress, .pill.claimed { color: var(--run); border-color: #245c40; background: #14261c; }
+    .pill.failed { color: var(--fail); border-color: #5c2428; background: #2a1416; }
+    .pill.done { color: var(--muted); }
+    .meta { color: var(--muted); font-size: 12px; display: grid; gap: 3px; }
+    .now { font-size: 13px; }
+    .now strong { font-weight: 620; display: block; margin-bottom: 2px; }
+    .progress {
+      height: 4px; background: #2a2e36; border-radius: 99px; overflow: hidden; margin-top: 8px;
+    }
+    .progress > i { display: block; height: 100%; background: var(--run); border-radius: 99px; }
+    .warn { color: var(--wait); font-size: 12px; }
+    .fail { color: var(--fail); font-size: 12px; }
+    h3.sec { margin: 0 0 8px; font-size: 12px; font-weight: 600; color: var(--muted); letter-spacing: .06em; text-transform: uppercase; }
+    .board { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; overflow: auto; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+    th { color: var(--muted); font-size: 11px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; background: #12141a; }
+    td.desc { max-width: 560px; white-space: normal; color: var(--text); }
+    .lead { display: block; font-weight: 550; }
+    .host { display: block; color: var(--muted); font-size: 12px; margin-top: 2px; }
+    .qty { font-variant-numeric: tabular-nums; color: var(--muted); font-size: 12px; white-space: nowrap; }
+    tr:last-child td { border-bottom: 0; }
+    tr:hover td { background: rgba(255,255,255,.015); }
+    .row-btns { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+    select {
+      background: #111214; color: var(--text); border: 1px solid var(--line);
+      border-radius: 6px; padding: 5px 6px; font: inherit;
+    }
+    .receipts {
+      display: none; background: var(--panel); border: 1px solid var(--line);
+      border-radius: 12px; padding: 12px 14px;
+    }
+    .receipts.show { display: block; }
+    .receipts h3 { margin: 0 0 8px; font-size: 13px; }
+    .receipt {
+      font-size: 12px; padding: 6px 0; border-top: 1px solid var(--line);
+      color: var(--muted);
+    }
+    .receipt:first-of-type { border-top: 0; }
+    .receipt.ok { color: var(--run); }
+    .receipt.err { color: var(--fail); }
+    details { color: var(--muted); font-size: 11px; margin-top: 4px; }
+    .note { color: var(--muted); font-size: 12px; margin: 8px 12px 12px; }
+    .kind { color: var(--muted); font-size: 11px; margin-right: 6px; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <div class="mark" aria-hidden="true"></div>
+      <div>
+        <h1>无影 Agentic Computer 监控</h1>
+        <div class="sub" id="subtitle">正在连接三台 AC…</div>
+      </div>
+    </div>
+    <div class="actions">
+      <span class="sub" id="clock"></span>
+      <button type="button" id="refresh">刷新</button>
+      <button type="button" class="primary" id="dispatch-all">下发可下发任务</button>
+    </div>
+  </header>
+  <main>
+    <section class="stats" id="stats"></section>
+    <section class="receipts" id="receipts"></section>
+    <section>
+      <h3 class="sec">Worker</h3>
+      <div class="acs" id="acs"></div>
+    </section>
+    <section>
+      <h3 class="sec">任务板</h3>
+      <div class="board">
+        <table>
+          <thead>
+            <tr>
+              <th>任务</th>
+              <th class="desc">在做什么</th>
+              <th>进度</th>
+              <th>状态</th>
+              <th>执行者</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody id="tasks"></tbody>
+        </table>
+        <p class="note">「重开并释放」只改 Git 任务记录，不会结束正在跑的 Codex。长任务期间心跳暂停属正常。</p>
+      </div>
+    </section>
+  </main>
+  <script>
+    const $ = (id) => document.getElementById(id);
+    let snap = null;
+    let timer = null;
+    let posting = false;
+
+    function ago(sec) {
+      if (sec == null) return "无心跳";
+      if (sec < 60) return sec + "s 前";
+      if (sec < 3600) return Math.floor(sec / 60) + "m 前";
+      return Math.floor(sec / 3600) + "h 前";
+    }
+
+    function esc(s) {
+      return String(s == null ? "" : s)
+        .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    }
+
+    function pillState(agent) {
+      if (!agent.online) return ["off", "离线"];
+      if (agent.codex) return ["run", "Codex 运行中"];
+      if (agent.busy) return ["wait", "已领任务"];
+      if (!agent.runtime) return ["off", "coworkd 未启动"];
+      return ["idle", "空闲"];
+    }
+
+    function shortHead(s) {
+      const t = String(s || "");
+      return t.length > 42 ? t.slice(0, 42) + "…" : t;
+    }
+
+    function friendlyError(s) {
+      const t = String(s || "");
+      if (/rebase|CONFLICT|non-fast-forward|failed to push|unmerged/i.test(t)) {
+        return "Git 推送冲突：另一台 AC 刚交卷。稍后重试，或先在该机 git pull --rebase。";
+      }
+      const line = t.split("\n").find((x) => x.trim()) || t;
+      return line.length > 180 ? line.slice(0, 180) + "…" : line;
+    }
+
+    function hostOf(t, fallbackUrl) {
+      const url = (t.seed_urls && t.seed_urls[0]) || fallbackUrl || "";
+      try { return url ? new URL(url).hostname.replace(/^www\./, "") : ""; } catch (e) { return ""; }
+    }
+
+    function taskBrief(t) {
+      const raw = String(t.description || t.title || "—");
+      const idx = raw.indexOf(" 起点：");
+      const url = (t.seed_urls && t.seed_urls[0]) || (idx >= 0 ? raw.slice(idx + 4).trim() : "");
+      const host = hostOf(t, url);
+      if (t.type === "fetch") {
+        const named = raw.match(/「([^」]+)」/);
+        const name = (named && named[1]) || t.brand || t.title || t.id;
+        return { lead: name + " · 详情页主图", host, full: raw };
+      }
+      if (t.type === "enqueue") {
+        return { lead: "把五家官网写入抓取队列（仅白名单域名）", host: "", full: raw };
+      }
+      if (t.type === "extract") {
+        return { lead: "汇总产品图目录与 structured.jsonl", host: "", full: raw };
+      }
+      const lead = (idx >= 0 ? raw.slice(0, idx) : raw).replace(/。$/, "");
+      return { lead, host, full: raw };
+    }
+
+    function pickDefaultAgent(agents, task) {
+      const cap = task.type;
+      const idle = agents.find((a) => a.online && !a.busy && (!cap || (a.capabilities || []).includes(cap)));
+      if (idle) return idle.id;
+      const online = agents.find((a) => a.online);
+      return (online || agents[0] || {}).id || "";
+    }
+
+    function renderStats() {
+      const s = snap.summary || {};
+      const items = [
+        [s.online + "/" + (s.agents || 0), "在线 Worker", s.online === s.agents && s.agents ? "ok" : "warn"],
+        [s.running || 0, "Codex 运行中", s.running ? "ok" : ""],
+        [s.ready || 0, "可下发", s.ready ? "info" : ""],
+        [s.blocked || 0, "等待上游", s.blocked ? "warn" : ""],
+        [s.failed || 0, "失败", s.failed ? "bad" : ""],
+        [s.done || 0, "已完成", s.done ? "ok" : ""],
+      ];
+      $("stats").innerHTML = items.map(([n, label, tone]) =>
+        `<div class="stat ${tone}"><b>${esc(n)}</b><span>${esc(label)}</span></div>`
+      ).join("");
+      const ready = s.ready || 0;
+      const btn = $("dispatch-all");
+      btn.disabled = posting || ready === 0;
+      btn.textContent = ready ? `下发可下发任务（${ready}）` : "没有可下发任务";
+    }
+
+    function renderCards() {
+      $("acs").innerHTML = (snap.agents || []).map((a) => {
+        const [cls, label] = pillState(a);
+        const t = a.current_task;
+        const cx = a.codex;
+        const target = a.images_target || (t && t.max_images) || 0;
+        const done = a.brand_images || 0;
+        let now = `<div class="now">等待新任务</div>`;
+        if (cx || t) {
+          const title = (t && t.description) || (cx && (cx.brand || "")) || (t && t.id) || "执行中";
+          const bits = [];
+          if (t && t.id) bits.push(t.id);
+          if (cx && cx.pid) bits.push("Codex pid " + cx.pid + " · " + (cx.etime || ""));
+          if (cx && cx.url) bits.push(cx.url);
+          now = `<div class="now"><strong>${esc(title)}</strong><div class="meta">${esc(bits.join(" · "))}</div></div>`;
+        }
+        const bar = target
+          ? `<div class="progress" title="当前品牌已落盘图片，不含清单文件"><i style="width:${Math.min(100, Math.round(done / target * 100))}%"></i></div>
+             <div class="meta">${esc(a.brand || "当前品牌")} ${done} / ${target} 张</div>`
+          : "";
+        return `<article class="card ${cls}">
+          <h2>${esc(a.id)}<span class="pill ${cls}">${esc(label)}</span></h2>
+          ${now}
+          ${bar}
+          <div class="meta">
+            <div>SSH ${esc(a.endpoint || ((a.ssh_user || "root") + "@" + (a.ssh_host || "") + ":" + (a.ssh_port || "")))}</div>
+            <div>目录 ${esc(a.workdir || a.cwd || "")}</div>
+            <div>连接 ${(a.runtime ? "coworkd pid " + a.runtime.pid + " · " + a.runtime.etime : "daemon 未运行")}</div>
+            <div>心跳 ${esc(ago(a.heartbeat_age_s))}${a.heartbeat_note ? " · " + esc(a.heartbeat_note) : ""}</div>
+            <div>Git ${esc(shortHead(a.git_head))}</div>
+            ${a.mismatch ? `<div class="warn">${esc(a.mismatch)}</div>` : ""}
+            ${a.error ? `<div class="fail">${esc(a.error)}</div>` : ""}
+          </div>
+        </article>`;
+      }).join("");
+    }
+
+    function renderTasks() {
+      const agents = snap.agents || [];
+      $("tasks").innerHTML = (snap.tasks || []).map((t) => {
+        const kind = t.status_kind || t.status;
+        const unfinished = ["open", "failed", "claimed"].includes(t.status);
+        const canDispatch = unfinished && t.ready !== false;
+        const preferred = pickDefaultAgent(agents, t);
+        const opts = agents.map((a) => {
+          const tag = !a.online ? "离线" : (a.busy ? "忙" : "闲");
+          const sel = a.id === preferred ? " selected" : "";
+          return `<option value="${esc(a.id)}"${sel}>${esc(a.id)} · ${tag}</option>`;
+        }).join("");
+        let btns = "";
+        if (canDispatch) {
+          btns = `<div class="row-btns">
+              <select data-task="${esc(t.id)}">${opts}</select>
+              <button data-act="dispatch" data-task="${esc(t.id)}">下发</button>
+              <button class="ghost" data-act="reopen" data-task="${esc(t.id)}">重开</button>
+            </div>`;
+        } else if (t.status_kind === "blocked") {
+          btns = `<span class="sub">等 ${esc((t.blocked_by || []).join("、") || "上游")}</span>`;
+        } else if (t.status === "in_progress") {
+          btns = `<div class="row-btns"><button class="ghost" data-act="reopen" data-task="${esc(t.id)}">重开并释放</button></div>`;
+        }
+        const brief = taskBrief(t);
+        const qty = t.images_target
+          ? `${t.images_done || 0}/${t.images_target}`
+          : "—";
+        return `<tr>
+          <td><code>${esc(t.id)}</code></td>
+          <td class="desc" title="${esc(brief.full || brief.lead)}"><span class="kind">${esc(t.type || "")}</span><span class="lead">${esc(brief.lead)}</span>${brief.host ? `<span class="host">${esc(brief.host)}</span>` : ""}</td>
+          <td class="qty">${esc(qty)}</td>
+          <td><span class="pill ${esc(kind)}">${esc(t.status_label || t.status)}</span></td>
+          <td>${esc(t.owner || "—")}</td>
+          <td>${btns}</td>
+        </tr>`;
+      }).join("");
+    }
+
+    function render() {
+      if (!snap) return;
+      const name = (snap.project && snap.project.name) || "cowork";
+      const source = snap.task_source ? "任务板合并自 " + snap.task_source : "";
+      const cfg = snap.config_path ? "配置 " + snap.config_path : "";
+      $("subtitle").textContent = [name, snap.root, cfg, source].filter(Boolean).join("  ·  ");
+      $("clock").textContent = new Date((snap.generated_at || 0) * 1000).toLocaleTimeString();
+      renderStats();
+      renderCards();
+      renderTasks();
+    }
+
+    function showReceipts(data) {
+      const box = $("receipts");
+      const results = data.results || [];
+      if (!results.length && data.message) {
+        box.className = "receipts show";
+        box.innerHTML = `<h3>${esc(data.message)}</h3>`;
+        return;
+      }
+      const okN = data.ok_count != null ? data.ok_count : results.filter((r) => r.ok).length;
+      const failN = data.fail_count != null ? data.fail_count : results.filter((r) => !r.ok).length;
+      const title = failN
+        ? `下发结果：${okN} 成功 · ${failN} 失败`
+        : `下发结果：${okN} 成功`;
+      const rows = results.map((r) => {
+        if (r.ok) {
+          return `<div class="receipt ok">${esc(r.task_id || "")} → ${esc(r.agent_id || "已重开")}</div>`;
+        }
+        const raw = r.error || data.error || "";
+        return `<div class="receipt err">${esc(r.task_id || "")} 失败：${esc(friendlyError(raw))}
+          ${raw ? `<details><summary>原始错误</summary><pre>${esc(raw)}</pre></details>` : ""}
+        </div>`;
+      }).join("");
+      box.className = "receipts show";
+      box.innerHTML = `<h3>${esc(title)}</h3>${rows}`;
+    }
+
+    async function load() {
+      try {
+        const res = await fetch("/api/snapshot", { cache: "no-store" });
+        snap = await res.json();
+        render();
+      } catch (err) {
+        $("receipts").className = "receipts show";
+        $("receipts").innerHTML = `<h3 class="fail">快照失败：${esc(err)}</h3>`;
+      }
+    }
+
+    async function post(body) {
+      posting = true;
+      render();
+      $("receipts").className = "receipts show";
+      $("receipts").innerHTML = "<h3>正在下发…</h3>";
+      try {
+        const res = await fetch("/api/dispatch", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        });
+        const data = await res.json();
+        showReceipts(data);
+        await load();
+      } catch (err) {
+        $("receipts").innerHTML = `<h3 class="fail">下发失败：${esc(err)}</h3>`;
+      } finally {
+        posting = false;
+        render();
+      }
+    }
+
+    $("refresh").onclick = load;
+    $("dispatch-all").onclick = () => post({ unfinished: true });
+    $("tasks").addEventListener("click", (ev) => {
+      const btn = ev.target.closest("button");
+      if (!btn || posting) return;
+      const id = btn.getAttribute("data-task");
+      const act = btn.getAttribute("data-act");
+      if (act === "reopen") post({ task_id: id, reopen: true });
+      if (act === "dispatch") {
+        const sel = btn.parentElement.querySelector("select");
+        post({ task_id: id, agent_id: sel ? sel.value : "" });
+      }
+    });
+
+    load();
+    timer = setInterval(() => { if (!posting) load(); }, 3000);
+  </script>
+</body>
+</html>
