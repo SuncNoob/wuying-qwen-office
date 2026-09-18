@@ -3,7 +3,7 @@
   "scenario": "coding",
   "type": "implement",
   "title": "Implement: 千问办公 AgentScope 应用",
-  "status": "claimed",
+  "status": "in_progress",
   "body": "用 AgentScope 做一个「千问办公」最小可用应用。\n\n产品：办公助手，面向日程、待办、纪要。至少三个 Agent：办公秘书（路由）、日程助理、待办助理。模型走通义千问 / DashScope（DashScopeChatModel），API Key 只从环境变量 DASHSCOPE_API_KEY 读取。\n\n技术：优先 AgentScope 2.x（agentscope.agent.Agent + Toolkit + launch_console 或等价 CLI）。若本机 python3 < 3.11，改用 AgentScope 1.x（ReActAgent）。必须 `import agentscope`。\n\n交付（均相对仓库根）：\n- README.md：如何安装、如何运行、三个 Agent 各自干什么\n- requirements.txt：含 agentscope\n- app.py：可运行入口；无 Key 时 --help 或 import 不崩溃\n- .env.example：DASHSCOPE_API_KEY=\n\n不要改 .cowork/ 协议文件。不要把真实密钥写进仓库。\n",
   "need": [
     "README.md",
@@ -21,5 +21,5 @@
   "brand": "",
   "max_images": 0,
   "created_at": 1789725507,
-  "updated_at": 1789725669
+  "updated_at": 1789725677
 }
